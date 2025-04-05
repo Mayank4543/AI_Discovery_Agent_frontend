@@ -12,9 +12,7 @@ cron.schedule("0 */12 * * *", async () => {
     const subscribers = await Subscriber.find({ isActive: true });
 
     const hfRes = await axios.get("http://localhost:4000/scrape/huggingface");
-    const githubRes = await axios.get(
-      "http://localhost:4000/scrape/github-developers"
-    );
+    const githubRes = await axios.get(process.env.GITHUB_URL);
 
     const hfModels = hfRes.data.slice(0, 5);
     const githubRepos = githubRes.data.slice(0, 5);
