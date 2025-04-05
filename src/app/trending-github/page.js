@@ -9,7 +9,7 @@ export default function TrendingGitHub() {
   useEffect(() => {
     const fetchTrendingRepos = async () => {
       try {
-        const res = await fetch(process.env.GITHUB_URL);
+        const res = await fetch(process.env.NEXT_PUBLIC_API_URL);
         const data = await res.json();
         setRepos(data);
       } catch (error) {
