@@ -4,14 +4,14 @@ import axios from "axios";
 import mongoose from "mongoose";
 import Subscriber from "../models/Subscriber.js"; // path to your Mongoose model
 
-mongoose.connect(process.env.MONGODB_URI); // ensure DB is connected
+mongoose.connect(process.env.NEXT_PUBLIC_API_MONGODB_URI); // ensure DB is connected
 
 // 12-hour cron logic
 cron.schedule("0 */12 * * *", async () => {
   try {
     const subscribers = await Subscriber.find({ isActive: true });
 
-    const hfRes = await axios.get("http://localhost:4000/scrape/huggingface");
+    const hfRes = await axios.get(process.env.NEXT_PUBLIC_API_PAPERS);
     const githubRes = await axios.get(process.env.GITHUB_URL);
 
     const hfModels = hfRes.data.slice(0, 5);

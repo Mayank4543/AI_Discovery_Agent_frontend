@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function HuggingFaceStyledUI({
   initialPapers,
@@ -23,7 +24,9 @@ export default function HuggingFaceStyledUI({
   useEffect(() => {
     const fetchPapers = async () => {
       setLoading(true);
-      const response = await fetch(`/api/papers?timeFrame=${timeFrame}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_PAPERS}?timeFrame=${timeFrame}`
+      );
       const newPapers = await response.json();
       setPapers(newPapers);
       setLoading(false);
@@ -42,12 +45,12 @@ export default function HuggingFaceStyledUI({
 
   const handleSubscribe = async () => {
     if (!email || !email.includes("@")) {
-      alert("Please enter a valid email address.");
+      toast.error("Please enter a valid email address.");
       return;
     }
 
     try {
-      const res = await fetch("/api/subscribe", {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_SUBSCRIBE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -56,20 +59,23 @@ export default function HuggingFaceStyledUI({
       const result = await res.json();
 
       if (res.ok) {
-        alert("You've successfully subscribed!");
+        toast.success("You've successfully subscribed!");
         setEmail("");
         setShowModal(false);
       } else {
-        alert(result.error || "Subscription failed.");
+        toast.error(result.error || "Subscription failed.");
       }
     } catch (error) {
       console.error("Subscription error:", error);
-      alert("Something went wrong.");
+      toast.error("Something went wrong. Please try again later.");
     }
   };
 
   return (
     <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e] text-white font-sans">
+      {/* Toaster */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       {/* Hero Section */}
       <section className="max-w-6xl mx-auto text-center">
         <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
