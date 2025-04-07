@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
+
+const TABS = ["research", "model", "dataset"];
 
 export default function HuggingFaceStyledUI({
   initialPapers,
@@ -16,32 +18,59 @@ export default function HuggingFaceStyledUI({
   });
 
   const [papers, setPapers] = useState(initialPapers || []);
+  const [models, setModels] = useState([]);
+  const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("research");
 
   const [showModal, setShowModal] = useState(false);
   const [email, setEmail] = useState("");
 
+  // Fetch research papers
   useEffect(() => {
+    if (activeTab !== "research") return;
     const fetchPapers = async () => {
       setLoading(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_PAPERS}?timeFrame=${timeFrame}`
       );
-      const newPapers = await response.json();
-      setPapers(newPapers);
+      const data = await response.json();
+      setPapers(data);
       setLoading(false);
     };
-
     fetchPapers();
+  }, [timeFrame, activeTab]);
 
-    const titleMap = {
-      today: "Today",
-      three_days: "Last 3 Days",
-      week: "This Week",
-      month: "This Month",
+  // Fetch models
+  useEffect(() => {
+    if (activeTab !== "model") return;
+    const fetchModels = async () => {
+      setLoading(true);
+      const response = await fetch(
+        "https://fetch-url.onrender.com/fetch-url?url=https://huggingface.co/api/trending?limit=10&type=model&isapi=1"
+      );
+      const data = await response.json();
+      setModels(data);
+      setLoading(false);
     };
-    document.title = `HuggingFace Papers - Top ${titleMap[timeFrame]}`;
-  }, [timeFrame]);
+    fetchModels();
+  }, [activeTab]);
+
+  // Fetch datasets
+  useEffect(() => {
+    if (activeTab !== "dataset") return;
+    const fetchDatasets = async () => {
+      setLoading(true);
+      const response = await fetch(
+        "https://fetch-url.onrender.com/fetch-url?url=https://huggingface.co/api/trending?limit=10&type=dataset&isapi=1"
+      );
+      const data = await response.json();
+      setDatasets(data);
+      setLoading(false);
+    };
+    fetchDatasets();
+  }, [activeTab]);
 
   const handleSubscribe = async () => {
     if (!email || !email.includes("@")) {
@@ -73,41 +102,63 @@ export default function HuggingFaceStyledUI({
 
   return (
     <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e] text-white font-sans">
-      {/* Toaster */}
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Hero Section */}
+      {/* Header */}
       <section className="max-w-6xl mx-auto text-center">
         <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
           INNOVATIVE <span className="text-[#F2C94C]">AI/ML</span> EXPLORER.
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 text-[#e0e0e0] leading-relaxed">
-          Passionate about AI research and web technologies. Explore trending
-          papers from the HuggingFace community with elegant, user-focused
-          design.
+          Explore trending Research Papers, AI Models, and Datasets from the
+          HuggingFace community.
         </p>
 
-        {/* Buttons */}
-        <div className="flex justify-center flex-wrap gap-6 mb-10">
+        {/* Navigation Buttons */}
+        <div className="flex justify-center flex-wrap gap-6 mb-6">
           <Link href="/trending-github">
-            <button className="bg-[#F2C94C] text-black px-6 py-3 rounded-full cursor-pointer font-semibold shadow-lg hover:bg-yellow-400 transition duration-200">
+            <button className="bg-[#F2C94C] text-black px-6 py-3 rounded-full font-semibold shadow-lg hover:bg-yellow-400 transition duration-200">
               View on GitHub
             </button>
           </Link>
-          <button className="border border-[#F2C94C] text-[#F2C94C] px-6 py-3 rounded-full font-semibold hover:bg-[#F2C94C] hover:text-black transition duration-200">
-            Original Papers
-          </button>
         </div>
 
-        {/* Timeframe Selector */}
-        <TimeFrameSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} />
+        {/* Tabs */}
+        <div className="flex justify-center space-x-4 mb-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-full text-sm font-bold border ${
+                activeTab === tab
+                  ? "bg-[#F2C94C] text-black"
+                  : "border-[#F2C94C] text-[#F2C94C] hover:bg-[#F2C94C] hover:text-black transition"
+              }`}
+            >
+              {tab === "research"
+                ? "Research Papers"
+                : tab === "model"
+                ? "Models"
+                : "Datasets"}
+            </button>
+          ))}
+        </div>
 
-        <p className="text-[#F2C94C] mt-3 font-medium tracking-wide">
-          {loading ? "" : `Showing ${papers.length} unique papers`}
-        </p>
+        {/* Timeframe selector only for papers */}
+        {activeTab === "research" && (
+          <>
+            <TimeFrameSelector
+              timeFrame={timeFrame}
+              setTimeFrame={setTimeFrame}
+            />
+            <p className="text-[#F2C94C] mt-3 font-medium tracking-wide">
+              {loading ? "" : `Showing ${papers.length} papers`}
+            </p>
+          </>
+        )}
 
         {/* Subscribe Button */}
-        <div className="mt-10">
+        <div className="mt-8">
           <button
             onClick={() => setShowModal(true)}
             className="bg-yellow-400 text-black font-semibold px-6 py-3 rounded-full shadow hover:bg-yellow-300 transition"
@@ -117,13 +168,13 @@ export default function HuggingFaceStyledUI({
         </div>
       </section>
 
-      {/* Paper Cards Section */}
-      <section className="mt-20 space-y-10 max-w-6xl mx-auto">
+      {/* Data Section */}
+      <section className="mt-16 space-y-10 max-w-6xl mx-auto">
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-yellow-400"></div>
           </div>
-        ) : (
+        ) : activeTab === "research" ? (
           papers.map((paper, index) => (
             <PaperRow
               key={index}
@@ -134,6 +185,25 @@ export default function HuggingFaceStyledUI({
               comments={paper.comments}
               submittedBy={paper.submittedBy || "Unknown"}
             />
+          ))
+        ) : activeTab === "model" ? (
+          models.map((model, index) => (
+            <ModelDatasetCard
+              key={index}
+              item={model}
+              type="model"
+              
+              username={model.username}
+              avatar={dev.avatar}
+              description={dev.description}
+              language={dev.repo_url}
+              stars={dev.stars}
+              forks={dev.forks}
+            />
+          ))
+        ) : (
+          datasets.map((dataset, index) => (
+            <ModelDatasetCard key={index} item={dataset} type="dataset" />
           ))
         )}
       </section>
@@ -173,9 +243,10 @@ export default function HuggingFaceStyledUI({
   );
 }
 
+// Select timeframe
 function TimeFrameSelector({ timeFrame, setTimeFrame }) {
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block mt-4">
       <select
         value={timeFrame}
         onChange={(e) => {
@@ -189,29 +260,17 @@ function TimeFrameSelector({ timeFrame, setTimeFrame }) {
         <option value="week">Top This Week</option>
         <option value="month">Top This Month</option>
       </select>
-      <svg
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path
-          fillRule="evenodd"
-          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-          clipRule="evenodd"
-        />
-      </svg>
     </div>
   );
 }
 
+// Research Paper Row
 function PaperRow({ title, image, upvotes, link, comments, submittedBy }) {
   const arxivId = link.split("/").pop();
   const arxivPdfLink = `https://arxiv.org/pdf/${arxivId}`;
 
   return (
-    <div className="bg-[#1c1c2b] rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl md:flex">
+    <div className="bg-[#1c1c2b] rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 md:flex">
       <div className="md:flex-shrink-0">
         <img
           className="h-56 w-full object-cover md:w-56"
@@ -224,7 +283,7 @@ function PaperRow({ title, image, upvotes, link, comments, submittedBy }) {
           <div>
             <a
               href={link}
-              className="block text-xl leading-tight font-semibold text-white hover:underline mb-2"
+              className="block text-xl font-semibold text-white hover:underline mb-2"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -235,31 +294,51 @@ function PaperRow({ title, image, upvotes, link, comments, submittedBy }) {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-300">
+            <span className="bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-300">
               ⬆ {upvotes}
-            </div>
-            <div className="flex items-center text-gray-400">💬 {comments}</div>
+            </span>
+            <span className="text-gray-400">💬 {comments}</span>
           </div>
         </div>
         <div className="flex space-x-4">
           <a
             href={link}
             target="_blank"
-            rel="noopener noreferrer"
-            className="bg-[#F2C94C] hover:bg-yellow-400 text-black font-bold py-2 px-4 rounded inline-flex items-center transition-colors duration-300"
+            className="bg-[#F2C94C] hover:bg-yellow-400 text-black font-bold py-2 px-4 rounded transition duration-300"
           >
             View on HuggingFace
           </a>
           <a
             href={arxivPdfLink}
             target="_blank"
-            rel="noopener noreferrer"
-            className="border border-[#F2C94C] text-[#F2C94C] hover:bg-[#F2C94C] hover:text-black font-bold py-2 px-4 rounded inline-flex items-center transition-colors duration-300"
+            className="border border-[#F2C94C] text-[#F2C94C] hover:bg-[#F2C94C] hover:text-black font-bold py-2 px-4 rounded transition duration-300"
           >
             View PDF
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Model / Dataset Card
+function ModelDatasetCard({ item, type }) {
+  return (
+    <div className="bg-[#1c1c2b] rounded-2xl shadow-lg p-6 hover:shadow-2xl transition">
+      <h3 className="text-xl font-bold text-[#F2C94C] mb-2">{item.id}</h3>
+      <p className="text-gray-300 mb-2 text-sm">
+        {item.description || "No description provided."}
+      </p>
+      <div className="text-sm text-gray-400">
+        🧠 Likes: {item.likes || 0} | 👤 Author: {item.author || "N/A"}
+      </div>
+      <a
+        href={`https://huggingface.co/${type}s/${item.id}`}
+        target="_blank"
+        className="inline-block mt-4 bg-[#F2C94C] hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded transition"
+      >
+        View on HuggingFace
+      </a>
     </div>
   );
 }
