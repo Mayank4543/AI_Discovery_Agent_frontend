@@ -12,6 +12,7 @@ export default function TrendingGitHub() {
     const fetchTrendingData = async () => {
       setLoading(true);
       try {
+<<<<<<< HEAD
         const [repoRes, devRes] = await Promise.all([
           fetch(process.env.NEXT_PUBLIC_API_GITHUB_REPO),
           fetch(process.env.NEXT_PUBLIC_API_GITHUB_DEV),
@@ -24,6 +25,13 @@ export default function TrendingGitHub() {
         setDevelopers(devData);
       } catch (err) {
         console.error("Failed to fetch data:", err);
+=======
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/scrape/github-developers`);
+        const data = await res.json();
+        setRepos(data);
+      } catch (error) {
+        console.error("Failed to fetch trending repositories:", error);
+>>>>>>> 1ad5e8d5723d61256c59630a3e1ab9bc4b0153cc
       } finally {
         setLoading(false);
       }
